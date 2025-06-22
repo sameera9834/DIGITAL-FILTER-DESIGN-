@@ -1,0 +1,53 @@
+#testbench for verilog implementation 
+`timescale 1ns/1ps
+
+module FIR_Filter_TB;
+
+reg clk;
+reg reset;
+reg signed [15:0] data_in;
+wire signed [15:0] data_out;
+
+// Instantiate the FIR filter
+FIR_Filter uut (
+    .clk(clk),
+    .reset(reset),
+    .data_in(data_in),
+    .data_out(data_out)
+);
+
+// Clock generation (10ns period = 100MHz)
+initial begin
+    clk = 0;
+    forever #5 clk = ~clk;
+end
+
+// Test sequence
+initial begin
+    // Initialize
+    reset = 1;
+    data_in = 0;
+    
+    // Release reset after 20ns
+    #20 reset = 0;
+    
+    // Test signal: two sine waves (50Hz and 150Hz)
+    for (integer i = 0; i < 1000; i = i + 1) begin
+        #10 data_in = 10000 * $sin(2 * 3.141592 * 50 * i / 1000.0) + 
+                      5000 * $sin(2 * 3.141592 * 150 * i / 1000.0);
+    end
+    
+    // End simulation
+    #100 $finish;
+end
+
+// Save results to file
+integer f;
+initial begin
+    f = $fopen("fir_output.txt", "w");
+    forever begin
+        #10 $fwrite(f, "%d %d\n", data_in, data_out);
+    end
+end
+
+endmodule
